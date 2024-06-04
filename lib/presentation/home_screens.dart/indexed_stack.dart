@@ -1,11 +1,14 @@
 import 'package:arlex_getx/constants/colors.dart';
+import 'package:arlex_getx/controller/home_screen_controller.dart';
 import 'package:arlex_getx/presentation/home_screens.dart/chat_with_doc_screen.dart';
 import 'package:arlex_getx/presentation/home_screens.dart/chat_with_images.dart';
 import 'package:arlex_getx/presentation/home_screens.dart/home_screen.dart';
 import 'package:arlex_getx/presentation/home_screens.dart/image_generation_screen.dart';
+import 'package:arlex_getx/presentation/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 
 class SectionItem {
   final int index;
@@ -35,18 +38,26 @@ class _IndexedStackScreenState extends State<IndexedStackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.homescreenBgColor,
         centerTitle: true,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 20.w),
-          child: SvgPicture.asset(
-            'assets/svgs/left_bar.svg',
-            height: 20.h,
-            width: 20.w,
-            // color: Colors.black,
-          ),
-        ),
+        leading: Builder(builder: (context) {
+          return InkWell(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: Padding(
+              padding: EdgeInsets.only(left: 20.w),
+              child: SvgPicture.asset(
+                'assets/svgs/left_bar.svg',
+                height: 20.h,
+                width: 20.w,
+                // color: Colors.black,
+              ),
+            ),
+          );
+        }),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -78,12 +89,28 @@ class _IndexedStackScreenState extends State<IndexedStackScreen> {
           ],
         ),
         actions: [
-          SvgPicture.asset(
-            'assets/svgs/edit_icon.svg',
-            height: 25.h,
-            width: 25.w,
-            color: Colors.black,
-          ),
+          InkWell(
+              onTap: () async {
+                Get.find<HomeScreenController>().saveToFirebase();
+              },
+              child: GetBuilder(
+                  init: Get.find<HomeScreenController>(),
+                  builder: (controller) {
+                    return Icon(
+                      Icons.add_to_drive_sharp,
+                      size: 25.sp,
+                      color: controller.chats.isEmpty
+                          ? Colors.grey.shade300
+                          : Colors.black,
+                    );
+                  })
+              /* SvgPicture.asset(
+              'assets/svgs/edit_icon.svg',
+              height: 25.h,
+              width: 25.w,
+              color: Colors.black,
+            ),*/
+              ),
           SizedBox(
             width: 10.w,
           ),
@@ -99,7 +126,7 @@ class _IndexedStackScreenState extends State<IndexedStackScreen> {
                   value: e.index,
                   child: Text(
                     e.title,
-                    style:const TextStyle(
+                    style: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w500),
                   ));
             }).toList(),

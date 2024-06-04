@@ -6,9 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
-
+class SignUpScreen extends StatelessWidget {
+  SignUpScreen({super.key});
   final controller = Get.find<AuthController>();
   @override
   Widget build(BuildContext context) {
@@ -45,8 +44,8 @@ class LoginScreen extends StatelessWidget {
                             blurRadius: 1,
                             color: Colors.grey.shade400,
                             spreadRadius: 1,
-                            offset: const Offset(0, 3)),
-                        const BoxShadow(
+                            offset: Offset(0, 3)),
+                        BoxShadow(
                             blurRadius: 0.5,
                             color: Colors.white24,
                             spreadRadius: 0.5,
@@ -67,13 +66,31 @@ class LoginScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 20.h),
                         Text(
-                          'Sign In',
+                          'Sign Up',
                           style: TextStyle(
                               fontSize: 30.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryColor),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
+                        TextField(
+                          maxLines: 1,
+                          controller: controller.nameController,
+                          style: TextStyle(
+                              fontSize: 15.sp, fontWeight: FontWeight.w500),
+                          decoration: InputDecoration(
+                              labelText: 'Name',
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                  borderRadius: BorderRadius.circular(15.r)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 15.h, horizontal: 15.w)),
+                        ),
+                        SizedBox(height: 15.h),
+
                         // Email TextField
                         TextField(
                           maxLines: 1,
@@ -84,24 +101,40 @@ class LoginScreen extends StatelessWidget {
                               labelText: 'Email',
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                  borderSide: const BorderSide(
+                                  borderSide: BorderSide(
                                     color: AppColors.primaryColor,
                                   ),
                                   borderRadius: BorderRadius.circular(15.r)),
                               contentPadding: EdgeInsets.symmetric(
                                   vertical: 15.h, horizontal: 15.w)),
                         ),
-                        const SizedBox(height: 15),
-                        // Password TextField
+                        SizedBox(height: 15.h),
                         TextField(
                           obscureText: true,
-                          controller: controller.passController,
                           maxLines: 1,
+                          controller: controller.passController,
                           decoration: InputDecoration(
                               labelText: 'Password',
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
-                                  borderSide: const BorderSide(
+                                  borderSide: BorderSide(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                  borderRadius: BorderRadius.circular(15.r)),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 15.h, horizontal: 15.w)),
+                        ),
+                        SizedBox(height: 15.h),
+                        // Password TextField
+                        TextField(
+                          obscureText: true,
+                          controller: controller.confPassController,
+                          maxLines: 1,
+                          decoration: InputDecoration(
+                              labelText: 'Confirm Password',
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
                                     color: AppColors.primaryColor,
                                   ),
                                   borderRadius: BorderRadius.circular(15.r)),
@@ -113,18 +146,17 @@ class LoginScreen extends StatelessWidget {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {}, // Add forgot password logic here
-                            child: const Text(
+                            child: Text(
                               'Forgot Password?',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
-                        SizedBox(height: 10.h),
-                        // Sign In Button
+
                         Obx(
                           () => InkWell(
                             onTap: () {
-                              controller.loginUser().then((value) {
+                              controller.signUpUser().then((value) {
                                 if (value) {
                                   Get.offAllNamed(RouteHelper.homeScreen);
                                 }
@@ -140,7 +172,7 @@ class LoginScreen extends StatelessWidget {
                                 child: controller.loading.value
                                     ? const Loader()
                                     : Text(
-                                        "Sign In",
+                                        "Sign up",
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
@@ -156,21 +188,21 @@ class LoginScreen extends StatelessWidget {
                           children: [
                             SizedBox(
                                 width: 130.w,
-                                child: const Divider(
+                                child: Divider(
                                   thickness: 1.5,
                                 )),
-                            const Text(
+                            Text(
                               'or',
                               style: TextStyle(fontSize: 16),
                             ),
                             SizedBox(
                                 width: 130.w,
-                                child: const Divider(
+                                child: Divider(
                                   thickness: 1.5,
                                 )),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
                         // Sign in with Google Button
                         Container(
                           width: double.maxFinite,
@@ -195,19 +227,19 @@ class LoginScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            const Text(
+                            Text(
                               "Don't have an account?",
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             TextButton(
                               onPressed: () {
-                                Get.toNamed(RouteHelper.signUpScreen);
+                                Get.back();
                               }, // Add sign-up logic here
-                              child: const Text(
+                              child: Text(
                                 'Sign Up',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600,

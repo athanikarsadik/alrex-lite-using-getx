@@ -1,3 +1,4 @@
+import 'package:arlex_getx/controller/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -12,7 +13,11 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 2), () {
-      Get.offNamed(RouteHelper.getHomeScreen());
+      if (Get.find<AuthController>().checkLoginStatus()) {
+        Get.offNamed(RouteHelper.getHomeScreen());
+      } else {
+        Get.offNamed(RouteHelper.getLoginScreen());
+      }
     });
     return Scaffold(
       backgroundColor: AppColors.primaryColor,

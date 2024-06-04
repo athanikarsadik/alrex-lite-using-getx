@@ -1,4 +1,5 @@
 import 'package:arlex_getx/controller/home_screen_controller.dart';
+import 'package:arlex_getx/presentation/widgets/expandable_text_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:get/get.dart';
@@ -46,14 +47,10 @@ class ChatItemWidget extends StatelessWidget {
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10.r),
                                 color: const Color(0xFF7176ED)),
-                            child: Text(
-                                content.parts?.lastOrNull!.text ??
-                                    'Some error occured',
-                                style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2))),
+                            child: ExpandableTextWidget(
+                              text: content.parts?.lastOrNull!.text ??
+                                  'Some error occured',
+                            ))),
                   ],
                 ),
               )
@@ -76,13 +73,14 @@ class ChatItemWidget extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Obx(()=>
-                      Padding(
+                    child: Obx(
+                      () => Padding(
                         padding: EdgeInsets.only(left: 5.w, top: 15.h),
-                        child: Get.find<HomeScreenController>().streamingData.value?
-                          Lottie.asset('assets/lottie/streaming.json',
-                      width: 25.w, height: 25.h):
-                         Icon(Icons.copy_all_outlined, size: 25.sp),
+                        child:
+                            Get.find<HomeScreenController>().streamingData.value
+                                ? Lottie.asset('assets/lottie/streaming.json',
+                                    width: 25.w, height: 25.h)
+                                : Icon(Icons.copy_all_outlined, size: 25.sp),
                       ),
                     ),
                   ),

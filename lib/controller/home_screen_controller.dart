@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:arlex_getx/models/chat_model.dart';
 import 'package:arlex_getx/models/chat_with_images_model.dart';
+import 'package:arlex_getx/models/title_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:get/get.dart';
@@ -16,9 +18,21 @@ import 'package:path_provider/path_provider.dart';
 import '../models/chat_with_doc_model.dart';
 
 class HomeScreenController extends GetxController {
-  final gemini = Gemini.instance;
+  late Gemini gemini = Gemini.instance;
+
+  @override
+  void onInit() async {
+    super.onInit();
+    drawerTitle.value = await homeScreenService.getChatTitlesForSideBar();
+  }
+
+  String curDocId = "";
 
   RxList<Content> chats = <Content>[].obs;
+  List<ChatDataModel> chatDataList = [];
+
+  RxList<TitleModel> drawerTitle = <TitleModel>[].obs;
+
   RxList<ImageGenerationModel> generatedImages = <ImageGenerationModel>[].obs;
   RxList<ChatWithImagesModel> imageChats = <ChatWithImagesModel>[].obs;
   RxList<ChatWithDocModel> docChats = <ChatWithDocModel>[].obs;
@@ -103,7 +117,6 @@ class HomeScreenController extends GetxController {
       chats.add(Content(role: 'user', parts: [Parts(text: searchedText)]));
       update();
       inputChatController.clear();
-
       gemini.streamChat(chats).listen((value) {
         loading.value = false;
         update();
@@ -117,10 +130,17 @@ class HomeScreenController extends GetxController {
       }, onDone: () {
         scrollToBottomChat();
         streamingData.value = false;
+        final lastText = chats.isNotEmpty
+            ? chats.last.parts
+                ?.fold<String>('', (text, part) => text + part.text!)
+            : '';
+
+        chatDataList.add(ChatDataModel(
+            query: searchedText, response: lastText ?? "Error accoured"));
       });
     } catch (e) {
       streamingData.value = false;
-      if(chats.last.role == 'user'){
+      if (chats.last.role == 'user') {
         chats.removeLast();
       }
       Get.snackbar(
@@ -191,6 +211,7 @@ class HomeScreenController extends GetxController {
         scrollToBottomImageChat();
         final result = await gemini.textAndImage(
           text: "Describe the images?",
+          modelName: 'models/gemini-1.5-pro-latest',
           images: List.from(selectedImages),
         );
         imageChats.removeLast();
@@ -245,23 +266,51 @@ class HomeScreenController extends GetxController {
     scrollToBottomImageChat();
   }
 
+  void saveToFirebase() {
+    streamingData.value = true;
+    if (chats.isEmpty) return;
+    try {
+      chats.add(Content(role: 'user', parts: [
+        Parts(
+            text:
+                "Write a single line title for this conversation. Give just a single line answer do not include any external line not even 'sure, here is ...'")
+      ]));
+      gemini.streamChat(chats).listen((value) {
+        if (chats.isNotEmpty && chats.last.role == value.content?.role) {
+          chats.last.parts!.last.text =
+              '${chats.last.parts!.last.text}${value.output}';
+        } else {
+          chats.add(Content(role: 'model', parts: [Parts(text: value.output)]));
+        }
+      }, onDone: () async {
+        String title = chats.last.parts!.last.text ?? DateTime.now().toString();
+        streamingData.value = false;
+        chats.removeLast();
+        chats.removeLast();
+        await homeScreenService.saveChatsToFirebase(
+            chatDataList, title, curDocId);
+        drawerTitle.value = await homeScreenService.getChatTitlesForSideBar();
+      });
+    } catch (e) {}
+  }
+
   void saveImageToGallery(String base64Image) async {
-  // Decode Base64
-  Uint8List bytes = base64Decode(base64Image);
+    // Decode Base64
+    Uint8List bytes = base64Decode(base64Image);
 
-  // Get external storage directory
-  Directory? directory = await getExternalStorageDirectory();
+    // Get external storage directory
+    Directory? directory = await getExternalStorageDirectory();
 
-  // Create a unique filename
-  String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-  String path = '${directory!.path}/image_$timestamp.jpg';
+    // Create a unique filename
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    String path = '${directory!.path}/image_$timestamp.jpg';
 
-  // Save image to file
-  File(path).writeAsBytesSync(bytes);
-  print('file saved');
-  // Save image to the gallery
-  await ImageGallerySaver.saveFile(path);
-}
+    // Save image to file
+    File(path).writeAsBytesSync(bytes);
+    print('file saved');
+    // Save image to the gallery
+    await ImageGallerySaver.saveFile(path);
+  }
 
   Future<void> chatwithDocGetRespose() async {
     final prompt = inputDocController.text.trim();
@@ -311,6 +360,43 @@ class HomeScreenController extends GetxController {
         colorText: Colors.white,
       );
       streamingDocChat.value = false;
+      return false;
+    }
+  }
+
+  Future<void> getChatHistoryByDocId({required String docId}) async {
+    try {
+      chatDataList =
+          await homeScreenService.getChatHistoryByDocId(docId: docId);
+
+      chats.clear();
+      chatDataList.forEach((chatItem) {
+        chats.add(Content(role: 'user', parts: [Parts(text: chatItem.query)]));
+        chats.add(
+            Content(role: 'model', parts: [Parts(text: chatItem.response)]));
+      });
+      curDocId = docId;
+    } catch (e) {
+    } finally {
+      update();
+    }
+  }
+
+  void clearAll() {
+    chats.clear();
+    chatDataList.clear();
+    generatedImages.clear();
+    imageChats.clear();
+    docChats.clear();
+    curDocId = "";
+    update();
+  }
+
+  Future<bool> logout() async {
+    try {
+      await homeScreenService.signOut();
+      return true;
+    } catch (e) {
       return false;
     }
   }
